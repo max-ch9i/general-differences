@@ -59,13 +59,16 @@ class TestStatisticDistribution:
     def append_test_statistic_to_distribution(self):
         self.distribution.add_test_statistic(self.meshing_test_statistic)
 
-    def append_meshing_to_distribution(self):
+    def calculate_meshing_test_statistic(self):
         self.count_x_in_combined_sample()
         self.save_counts_as_x_meshing_cdf()
         self.count_y_in_combined_sample()
         self.save_counts_as_y_meshing_cdf()
         self.find_max_cumulative_difference()
         self.calculate_test_statistic()
+
+    def append_meshing_to_distribution(self):
+        self.calculate_meshing_test_statistic()
         self.append_test_statistic_to_distribution()
 
     def count_x_in_combined_sample(self):
@@ -83,11 +86,17 @@ class TestStatisticDistribution:
     def make_probabilities(self):
         self.distribution.calculate_probabilities()
 
-    def make(self):
+    def make_test_statistic_distribution(self):
         for y_item_indices in self.make_y_item_indices():
             self.update_combined_sample_attributions(y_item_indices)
             self.append_meshing_to_distribution()
         self.make_probabilities()
+
+    def make_test_statistic(self):
+        self.calculate_meshing_test_statistic()
+
+    def get_test_statistic(self):
+        return self.meshing_test_statistic
 
     def get_probabilities(self):
         return self.distribution.get_probabilities()
