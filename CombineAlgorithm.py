@@ -1,5 +1,6 @@
 from SamplesXY import SamplesXY
 from Source import Source
+from CombinedSample import CombinedSample
 
 
 class CombineAlgorithm:
@@ -9,8 +10,8 @@ class CombineAlgorithm:
         self.next_value = None
         self.next_value_source_sample = None
 
-        self.attributions = []
-        self.test_sample = []
+        self.attributions_list = []
+        self.combined_sample_list = []
         self.x_index = 0
         self.y_index = 0
 
@@ -34,8 +35,8 @@ class CombineAlgorithm:
         return sample[index] if index < sample_size else float('inf')
 
     def append_to_test_sample(self, next_value, from_sample):
-        self.test_sample.append(next_value)
-        self.attributions.append(from_sample)
+        self.combined_sample_list.append(next_value)
+        self.attributions_list.append(from_sample)
 
     def get_next_value_x(self):
         self.next_value_x = self.get_next_value(self.samples_x_y_object.sample_x, self.samples_x_y_object.sample_size_x,
@@ -68,12 +69,14 @@ class CombineAlgorithm:
 
     def visit(self, samples_x_y_object):
         self.samples_x_y_object = samples_x_y_object
-
         self.combine_samples()
 
     def output_test_sample(self):
-        print(self.test_sample)
-        print(self.attributions)
+        print(self.combined_sample_list)
+        print(self.attributions_list)
+
+    def get_combined_sample(self):
+        return CombinedSample(self.combined_sample_list, self.attributions_list)
 
 
 if __name__ == '__main__':
