@@ -1,19 +1,20 @@
 from itertools import combinations
 from math import gcd
-
 from fractions import Fraction
+
 from Source import Source
+from SamplesXY import SamplesXY
 from CountAlgorithm import CountAlgorithm
 from CombinedSample import CombinedSample
 from Distribution import Distribution
 
 
 class TestStatisticDistribution:
-    def __init__(self, sample_size_y: int, shared_combined_sample: CombinedSample):
+    def __init__(self, samples_x_y: SamplesXY, shared_combined_sample: CombinedSample):
         self.shared_combined_sample = shared_combined_sample
         self.shared_combined_sample_size = self.shared_combined_sample.combined_sample_size
-        self.sample_size_y = sample_size_y
-        self.sample_size_x = self.shared_combined_sample_size - sample_size_y
+        self.sample_size_y = samples_x_y.sample_size_y
+        self.sample_size_x = self.shared_combined_sample_size - self.sample_size_y
         self.sample_size_x_y_gcd = gcd(self.sample_size_x, self.sample_size_y)
         self.test_statistic_factor = self.sample_size_x * self.sample_size_y / self.sample_size_x_y_gcd
         self.algorithm = CountAlgorithm()
@@ -22,12 +23,29 @@ class TestStatisticDistribution:
         self.y_meshing_cdf = []
         self.max_cumulative_difference = 0
         self.meshing_test_statistic = 0
+        self.y_item_positions = []
+        self.number_of_y_item_positions = 0
 
         self.distribution = Distribution()
 
     def make_y_item_indices(self):
+        print("Calculating meshings... ", sep=" ", end=" ")
         item_indices = [x for x in range(0, self.shared_combined_sample_size)]
-        return combinations(item_indices, self.sample_size_y)
+        self.y_item_positions = combinations(item_indices, self.sample_size_y)
+        self.number_of_y_item_positions = sum(1 for _ in self.y_item_positions)
+        # Restore the iterator
+        self.y_item_positions = combinations(item_indices, self.sample_size_y)
+
+    def get_y_item_positions(self):
+        return self.y_item_positions
+
+    def show_progress(self, step):
+        if step % 1000 == 0:
+            print("\rCalculating meshings... {}/{}".format(step, self.number_of_y_item_positions), sep=" ", end=" ")
+
+    @staticmethod
+    def finish_progress():
+        print("\rCalculating meshings... Done")
 
     def update_combined_sample_attributions(self, y_item_indices):
         next_attributions = [Source.FORM_SAMPLE_X for _ in range(0, self.shared_combined_sample_size)]
@@ -54,7 +72,7 @@ class TestStatisticDistribution:
         self.max_cumulative_difference = max(cumulative_difference)
 
     def calculate_test_statistic(self):
-        self.meshing_test_statistic = self.test_statistic_factor * self.max_cumulative_difference
+        self.meshing_test_statistic = int(self.test_statistic_factor * self.max_cumulative_difference)
 
     def append_test_statistic_to_distribution(self):
         self.distribution.add_test_statistic(self.meshing_test_statistic)
@@ -87,9 +105,12 @@ class TestStatisticDistribution:
         self.distribution.calculate_probabilities()
 
     def make_test_statistic_distribution(self):
-        for y_item_indices in self.make_y_item_indices():
+        self.make_y_item_indices()
+        for index, y_item_indices in enumerate(self.get_y_item_positions()):
+            self.show_progress(index)
             self.update_combined_sample_attributions(y_item_indices)
             self.append_meshing_to_distribution()
+        self.finish_progress()
         self.make_probabilities()
 
     def make_test_statistic(self):
@@ -100,3 +121,22 @@ class TestStatisticDistribution:
 
     def get_probabilities(self):
         return self.distribution.get_probabilities()
+
+    def get_calculate_p_values_for(self, observed_test_statistic):
+        p_value = 0
+        for test_statistic, probability in self.get_probabilities().items():
+            if test_statistic >= observed_test_statistic:
+                p_value += probability
+        return p_value
+
+    def perform_test(self):
+        # Get the value of the test statistic for the combined samples with the original attributions
+        self.make_test_statistic()
+        observed_value_of_test_statisitic = self.get_test_statistic()
+
+        # Make test statistic distribution
+        self.make_test_statistic_distribution()
+        p_value = self.get_calculate_p_values_for(observed_value_of_test_statisitic)
+
+        print("Observed value of test statistic is {}".format(observed_value_of_test_statisitic))
+        print("Exact p-value is {}".format(p_value))
