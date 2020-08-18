@@ -12,8 +12,8 @@ if __name__ == '__main__':
     # samples_x_y_instance = SamplesXY(sample_x=[5, 10], sample_y=[2, 2, 10])
 
     # Example 3
-    samples_x_y_instance = SamplesXY(sample_x=[10, 11, 12],
-                                     sample_y=[2, 2, 4, 2, 2, 3, 7, 9])
+    samples_x_y_instance = SamplesXY(sample_x=[11, 12, 13, 14],
+                                     sample_y=[5, 6, 7])
 
     # Combine the two samples into one, noting the samples the values came from
     samples_x_y_instance.run(algorithm_instance)
@@ -23,3 +23,4 @@ if __name__ == '__main__':
                                              shared_combined_sample=combined_sample_instance)
 
     distribution.perform_test()
+    distribution.perform_test_approximate()

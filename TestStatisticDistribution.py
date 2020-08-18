@@ -1,5 +1,5 @@
 from itertools import combinations
-from math import gcd
+from math import gcd, sqrt
 from fractions import Fraction
 
 from Source import Source
@@ -17,6 +17,8 @@ class TestStatisticDistribution:
         self.sample_size_x = self.shared_combined_sample_size - self.sample_size_y
         self.sample_size_x_y_gcd = gcd(self.sample_size_x, self.sample_size_y)
         self.test_statistic_factor = self.sample_size_x * self.sample_size_y / self.sample_size_x_y_gcd
+        self.test_statistic_factor_approximate = self.sample_size_x_y_gcd / \
+                                 sqrt(self.sample_size_x * self.sample_size_y * self.shared_combined_sample_size)
         self.algorithm = CountAlgorithm()
         self.combined_sample_counts = []
         self.x_meshing_cdf = []
@@ -25,6 +27,7 @@ class TestStatisticDistribution:
         self.meshing_test_statistic = 0
         self.y_item_positions = []
         self.number_of_y_item_positions = 0
+        self.combined_sample_attributions_cache = []
 
         self.distribution = Distribution()
 
@@ -74,6 +77,9 @@ class TestStatisticDistribution:
     def calculate_test_statistic(self):
         self.meshing_test_statistic = int(self.test_statistic_factor * self.max_cumulative_difference)
 
+    def approximate_test_statistic(self):
+        self.meshing_test_statistic = self.test_statistic_factor_approximate * self.meshing_test_statistic
+
     def append_test_statistic_to_distribution(self):
         self.distribution.add_test_statistic(self.meshing_test_statistic)
 
@@ -116,6 +122,16 @@ class TestStatisticDistribution:
     def make_test_statistic(self):
         self.calculate_meshing_test_statistic()
 
+    def make_test_statistic_approximate(self):
+        self.calculate_meshing_test_statistic()
+        self.approximate_test_statistic()
+
+    def cache_attributions(self):
+        self.combined_sample_attributions_cache = self.shared_combined_sample.get_attributions_copy()
+
+    def restore_attributions(self):
+        self.shared_combined_sample.set_attributions(self.combined_sample_attributions_cache)
+
     def get_test_statistic(self):
         return self.meshing_test_statistic
 
@@ -133,10 +149,19 @@ class TestStatisticDistribution:
         # Get the value of the test statistic for the combined samples with the original attributions
         self.make_test_statistic()
         observed_value_of_test_statisitic = self.get_test_statistic()
+        self.cache_attributions()
 
         # Make test statistic distribution
         self.make_test_statistic_distribution()
         p_value = self.get_calculate_p_values_for(observed_value_of_test_statisitic)
+        self.restore_attributions()
 
         print("Observed value of test statistic is {}".format(observed_value_of_test_statisitic))
-        print("Exact p-value is {}".format(p_value))
+        print("Exact p-value is {}\n".format(p_value))
+
+    def perform_test_approximate(self):
+        self.make_test_statistic_approximate()
+        observed_value_of_test_statisitic = self.get_test_statistic()
+
+        print("Observed approximate value of test statistic is {}".format(observed_value_of_test_statisitic))
+        print("Critical value for 0.05-rejection region is 1.358\n")

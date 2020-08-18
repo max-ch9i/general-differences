@@ -7,5 +7,8 @@ class CombinedSample:
     def set_attributions(self, next_attributions: list):
         self.attributions = next_attributions
 
+    def get_attributions_copy(self):
+        return self.attributions[:]
+
     def run(self, visitor):
         visitor.visit(self)
